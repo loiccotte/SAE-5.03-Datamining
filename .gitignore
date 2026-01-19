@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Project specific
+vectorisation-du-texte/output/
+classification-supervisee/output/
+annotation-thematique/output/
+
+# Data
+*.pkl
+*.joblib
+*.csv
+
+# Logs
+*.log
