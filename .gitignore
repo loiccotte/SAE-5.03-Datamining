@@ -38,5 +38,3 @@ annotation-thematique/output/
 
 # Keep vectorisation final artifacts
 !vectorisation-du-texte/output/*FINAL.pkl
-!vectorisation-du-texte/output/status.json
-!vectorisation-du-texte/output/pipeline.log
