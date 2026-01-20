@@ -22,8 +22,9 @@ build/
 *.swo
 *~
 
+
 # Project specific
-vectorisation-du-texte/output/
+vectorisation-du-texte/output/*
 classification-supervisee/output/
 annotation-thematique/output/
 
@@ -34,3 +35,8 @@ annotation-thematique/output/
 
 # Logs
 *.log
+
+# Keep vectorisation final artifacts
+!vectorisation-du-texte/output/*FINAL.pkl
+!vectorisation-du-texte/output/status.json
+!vectorisation-du-texte/output/pipeline.log
