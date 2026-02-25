@@ -115,8 +115,18 @@ def get_completed_configs():
     
     with open(status_file, 'r') as f:
         status = json.load(f)
-    
-    return {k for k, v in status.items() if v.get("completed", False)}
+
+    completed = set()
+    for config_name, meta in status.items():
+        if not meta.get("completed", False):
+            continue
+        final_file = OUTPUT_DIR / f"{config_name}_FINAL.pkl"
+        if final_file.exists():
+            completed.add(config_name)
+        else:
+            logger.warning(f"Final manquant pour {config_name}, relance nécessaire")
+
+    return completed
 
 
 logger.info("Utilitaires chargés avec succès")

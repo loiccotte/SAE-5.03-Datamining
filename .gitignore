@@ -35,6 +35,7 @@ annotation-thematique/output/
 
 # Logs
 *.log
+*_output.txt
 
 # Keep vectorisation final artifacts
 !vectorisation-du-texte/output/*FINAL.pkl

@@ -15,6 +15,7 @@ Chaque résultat est sauvegardé dans output/ avec un nom unique.
 
 import sys
 import os
+import argparse
 from pathlib import Path
 import logging
 import pickle
@@ -91,7 +92,11 @@ def process_config(config):
         
         # Étape 4: Lemmatisation
         logger.info("[4/7] Lemmatisation...")
-        df = apply_lemmatization(df, apply_lemmatization=config['lemmatization'])
+        df = apply_lemmatization(
+            df,
+            apply_lemmatization=config['lemmatization'],
+            remove_stopwords_after=config['stopwords']
+        )
         save_checkpoint(df, config_name, "step04_lemmatized")
         
         # Étape 5: Bag of Words / TF-IDF
@@ -185,7 +190,22 @@ def print_summary(all_configs, completed):
     print("\n" + "=" * 80 + "\n")
 
 
-def main():
+def cleanup_temp_pickles():
+    """
+    Supprime les fichiers temporaires (step*.pkl) et checkpoints intermédiaires.
+    """
+    temp_files = list(OUTPUT_DIR.glob("*step*.pkl"))
+    deleted = 0
+    for file_path in temp_files:
+        try:
+            file_path.unlink()
+            deleted += 1
+        except Exception as e:
+            logger.warning(f"Impossible de supprimer {file_path.name}: {str(e)}")
+    logger.info(f"Nettoyage terminé: {deleted} fichiers temporaires supprimés")
+
+
+def main(keep_temp=False):
     """
     Fonction principale
     """
@@ -228,12 +248,35 @@ def main():
     
     logger.info(f"Pipeline terminée: {successful} réussies, {failed} échouées")
     
+    # Valider les résultats
+    if failed == 0:
+        logger.info("\n" + "="*80)
+        logger.info("Lancement de la validation des résultats...")
+        logger.info("="*80)
+        try:
+            from validate_results import validate_all_configurations
+            validate_all_configurations()
+        except Exception as e:
+            logger.error(f"Erreur lors de la validation: {str(e)}")
+
+    # Nettoyage des fichiers temporaires si tout est OK et option activée
+    if failed == 0 and not keep_temp:
+        cleanup_temp_pickles()
+    
     return successful, failed
 
 
 if __name__ == "__main__":
     try:
-        successful, failed = main()
+        parser = argparse.ArgumentParser(description="Pipeline de vectorisation du texte")
+        parser.add_argument(
+            "--keep-temp",
+            action="store_true",
+            help="Conserver les fichiers temporaires (step*.pkl)"
+        )
+        args = parser.parse_args()
+
+        successful, failed = main(keep_temp=args.keep_temp)
         exit_code = 0 if failed == 0 else 1
         sys.exit(exit_code)
     except KeyboardInterrupt:

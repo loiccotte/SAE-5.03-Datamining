@@ -5,6 +5,7 @@ Output: Dataframe avec colonne 'texte_no_stopwords'
 """
 import pandas as pd
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +51,13 @@ def remove_stopwords(df, apply_stopwords=True):
         logger.info(f"Nombre de stopwords chargés: {len(stopwords_fr)}")
         
         def remove_stop(text):
-            words = text.split()
-            words_filtered = [w for w in words if w not in stopwords_fr and len(w) > 1]
-            return ' '.join(words_filtered)
+            # Tokenisation alignée avec TF-IDF (token_pattern=\b\w+\b)
+            tokens = re.findall(r"\b\w+\b", text)
+            tokens_filtered = [
+                tok for tok in tokens
+                if tok.lower() not in stopwords_fr and len(tok) > 1
+            ]
+            return ' '.join(tokens_filtered)
         
         df['texte_no_stopwords'] = df['texte_lowercased'].apply(remove_stop)
         logger.info("Stopwords supprimés")

@@ -5,6 +5,7 @@ Output: Dataframe avec colonne 'texte_lemmatized'
 """
 import pandas as pd
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -39,14 +40,39 @@ def get_spacy_model():
 def lemmatize_text(text):
     """
     Lemmatise un texte en utilisant spacy
+    Exclut également les déterminants, pronoms et auxiliaires
     """
     nlp = get_spacy_model()
     doc = nlp(text)
-    lemmas = [token.lemma_ for token in doc if not token.is_punct]
+    
+    # Exclure ponctuation, déterminants (DET), pronoms (PRON) et auxiliaires (AUX)
+    excluded_pos = {'DET', 'PRON', 'AUX'}
+    
+    # Liste de mots à exclure même si mal taggués par spaCy
+    excluded_lemmas = {
+        'le', 'la', 'les', 'un', 'une', 'des', 'ce', 'cette', 'ces',
+        'mon', 'ma', 'mes', 'ton', 'ta', 'tes', 'son', 'sa', 'ses',
+        'notre', 'nos', 'votre', 'vos', 'leur', 'leurs',
+        'du', 'au', 'aux', 'de', 'à',
+        'être', 'avoir', 'aller',
+        'je', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles',
+        'me', 'te', 'se', 'lui', 'leur', 'y', 'en'
+    }
+    
+    lemmas = []
+    for token in doc:
+        if token.is_punct:
+            continue
+        if token.pos_ in excluded_pos:
+            continue
+        if token.lemma_.lower() in excluded_lemmas:
+            continue
+        lemmas.append(token.lemma_)
+    
     return ' '.join(lemmas)
 
 
-def apply_lemmatization(df, apply_lemmatization=True):
+def apply_lemmatization(df, apply_lemmatization=True, remove_stopwords_after=False):
     """
     Applique la lemmatisation au texte
     
@@ -79,6 +105,30 @@ def apply_lemmatization(df, apply_lemmatization=True):
             lemmatized_texts.append(lemmatize_text(text))
         
         df['texte_lemmatized'] = lemmatized_texts
+        
+        if remove_stopwords_after:
+            logger.info("Suppression des stopwords après lemmatisation...")
+            try:
+                from nltk.corpus import stopwords
+                stopwords.words('french')
+                stopwords_fr = set(stopwords.words('french'))
+            except LookupError:
+                logger.info("Téléchargement des ressources NLTK...")
+                import nltk
+                nltk.download('stopwords')
+                from nltk.corpus import stopwords
+                stopwords_fr = set(stopwords.words('french'))
+
+            def remove_stopwords_lem(text):
+                tokens = re.findall(r"\b\w+\b", text)
+                tokens_filtered = [
+                    tok for tok in tokens
+                    if tok.lower() not in stopwords_fr and len(tok) > 1
+                ]
+                return ' '.join(tokens_filtered)
+
+            df['texte_lemmatized'] = df['texte_lemmatized'].apply(remove_stopwords_lem)
+            logger.info("Stopwords supprimés après lemmatisation")
         logger.info("Lemmatisation appliquée")
     else:
         logger.info("Lemmatisation désactivée, copie du texte original...")
