@@ -3,6 +3,13 @@ Script 04 : Lemmatisation (Ramener les mots à leur forme canonique)
 Input: Dataframe avec colonne 'texte_no_stopwords'
 Output: Dataframe avec colonne 'texte_lemmatized'
 """
+# torch doit être préchargé EN PREMIER : pandas/numpy chargent des DLLs BLAS qui
+# entrent en conflit avec c10.dll (torch) si torch est importé après eux (WinError 1114).
+try:
+    import torch  # noqa: F401
+except (ImportError, OSError):
+    pass  # stanza non installé ou DLL manquante → on continue avec spaCy uniquement
+
 import pandas as pd
 import logging
 import re

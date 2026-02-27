@@ -11,6 +11,17 @@ Total : 2(L) × 3(SW) × [2(LEM=0) + 2×2(LEM=1)] × 3(NG) × 2(VL) = 108 config
 NE PAS TOUCHER : run_pipeline.py, les 24 pkl originaux, les notebooks existants.
 """
 
+# ── IMPORTANT (Windows) ─────────────────────────────────────────────────────
+# torch doit être importé AVANT sys.path.insert et AVANT pandas/numpy.
+# Sur Windows, sys.path.insert() modifie la recherche de DLL, ce qui empêche
+# c10.dll (torch) de s'initialiser si pandas est chargé en premier.
+# Ce préchargement garantit l'ordre correct des DLLs.
+try:
+    import torch  # noqa: F401
+except (ImportError, OSError):
+    pass  # torch non disponible — les configs spaCy fonctionneront quand même
+# ────────────────────────────────────────────────────────────────────────────
+
 import sys
 import pickle
 import logging
