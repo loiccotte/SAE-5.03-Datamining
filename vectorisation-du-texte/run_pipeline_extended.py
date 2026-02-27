@@ -151,7 +151,7 @@ def run_single_config(config):
         with open(output_path, 'wb') as f:
             pickle.dump(final_output, f)
 
-        logger.info(f"✓ Sauvegardé : {output_path}")
+        logger.info(f"[OK] Sauvegarde : {output_path}")
         logger.info(f"  Shape={final_output['shape']}  Features={final_output['n_features']}")
         return True
 
