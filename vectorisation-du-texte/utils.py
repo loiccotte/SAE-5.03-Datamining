@@ -37,11 +37,27 @@ def get_output_file(config_name, step_name):
 def get_config_name(lowercase, stopwords, lemmatization, ngram):
     """
     Génère un nom unique pour une configuration de traitement
-    
+
     Format: config_L{0|1}_S{0|1}_LEM{0|1}_NG{1|2|3}
     """
     return (f"config_L{int(lowercase)}_S{int(stopwords)}_"
             f"LEM{int(lemmatization)}_NG{ngram}")
+
+
+def get_config_name_extended(lowercase, sw_mode, lemmatization, ngram, lemma_lib, vect_lib):
+    """
+    Génère le nom de configuration étendu incluant les bibliothèques.
+    Format : config_L{L}_S{SW}_LEM{LEM}_NG{NG}_{LEMMA_LIB}_{VECT_LIB}
+    SW : 0=none, 2=partial, 1=all
+    LEMMA_LIB : SPACY, STANZA, ou NONE (si lemmatization=False)
+    VECT_LIB : TFIDF ou BM25
+    """
+    sw_map = {'none': 0, 'partial': 2, 'all': 1}
+    sw_code = sw_map.get(sw_mode, 0)
+    lemma_lib_tag = lemma_lib.upper() if lemmatization else 'NONE'
+    vect_tag = vect_lib.upper()
+    return (f"config_L{int(lowercase)}_S{sw_code}_LEM{int(lemmatization)}"
+            f"_NG{ngram}_{lemma_lib_tag}_{vect_tag}")
 
 
 def save_checkpoint(data, config_name, step_name):
