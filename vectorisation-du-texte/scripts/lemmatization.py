@@ -12,6 +12,40 @@ logger = logging.getLogger(__name__)
 # Variable globale pour le modèle spaCy
 _nlp_model = None
 
+# Variable globale pour le modèle Stanza (lazy loading)
+_stanza_model = None
+
+
+def get_stanza_model():
+    """
+    Importe et retourne le modèle Stanza français (lazy loading)
+    """
+    global _stanza_model
+
+    if _stanza_model is None:
+        import stanza
+        stanza.download('fr', verbose=False)
+        _stanza_model = stanza.Pipeline('fr', processors='tokenize,lemma', verbose=False)
+        logger.info("Modèle Stanza français chargé")
+
+    return _stanza_model
+
+
+def lemmatize_text_stanza(text):
+    """
+    Lemmatise un texte en utilisant Stanza.
+    Exclut les tokens dont upos est DET, PRON ou AUX — même logique que spaCy.
+    """
+    nlp = get_stanza_model()
+    doc = nlp(text)
+    excluded_upos = {'DET', 'PRON', 'AUX'}
+    return ' '.join(
+        word.lemma
+        for sent in doc.sentences
+        for word in sent.words
+        if word.upos not in excluded_upos
+    )
+
 
 def get_spacy_model():
     """
@@ -72,7 +106,8 @@ def lemmatize_text(text):
     return ' '.join(lemmas)
 
 
-def apply_lemmatization(df, apply_lemmatization=True, remove_stopwords_after=False):
+def apply_lemmatization(df, apply_lemmatization=True, remove_stopwords_after=False,
+                        lemma_lib='spacy'):
     """
     Applique la lemmatisation au texte
     
@@ -91,18 +126,23 @@ def apply_lemmatization(df, apply_lemmatization=True, remove_stopwords_after=Fal
     df = df.copy()
     
     if apply_lemmatization:
-        logger.info("Application de la lemmatisation...")
+        logger.info(f"Application de la lemmatisation ({lemma_lib})...")
         logger.info("Cette étape peut prendre du temps...")
-        
+
+        if lemma_lib == 'stanza':
+            lemmatize_fn = lemmatize_text_stanza
+        else:
+            lemmatize_fn = lemmatize_text
+
         texts = df['texte_no_stopwords'].tolist()
         lemmatized_texts = []
-        
+
         total = len(texts)
         for i, text in enumerate(texts):
             if i % 100 == 0:
                 logger.info(f"Progression: {i}/{total}")
-            
-            lemmatized_texts.append(lemmatize_text(text))
+
+            lemmatized_texts.append(lemmatize_fn(text))
         
         df['texte_lemmatized'] = lemmatized_texts
         
