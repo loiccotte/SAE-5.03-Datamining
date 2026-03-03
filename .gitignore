@@ -39,3 +39,7 @@ annotation-thematique/output/
 
 # Keep vectorisation final artifacts
 !vectorisation-du-texte/output/*FINAL.pkl
+
+# Keep deliverable notebook and data
+!SAE_503_Livrable_Final.ipynb
+!avis_annotés.csv
